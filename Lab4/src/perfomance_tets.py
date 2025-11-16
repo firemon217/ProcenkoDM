@@ -1,0 +1,48 @@
+from generate_data import generate_datasets
+from sorts import *
+import timeit
+import sys
+sys.setrecursionlimit(10000) 
+
+SIZES = [100, 1000, 5000, 10000]
+
+SORTS = {
+    "Bubble": bubble_sort,
+    "Selection": selection_sort,
+    "Insertion": insertion_sort,
+    "Merge": merge_sort,
+    "Quick": quick_sort
+}
+
+def measure_time(sort_fn, arr, runs=5):
+    statement = "sort_fn(test_arr.copy())"
+    setup = (
+        "from __main__ import sort_fn, test_arr"
+    )
+
+    global sort_fn_global, test_arr
+    sort_fn_global = sort_fn
+    test_arr = arr
+
+    total_time = timeit.timeit(
+        stmt="sort_fn_global(test_arr.copy())",
+        number=runs,
+        globals=globals()
+    )
+
+    return total_time / runs
+
+if __name__ == "__main__":
+    datasets = generate_datasets(SIZES)
+    print("\n=== BENCHMARK START ===\n")
+    for size, types in datasets.items():
+        print(f"\n------------------------------")
+        print(f"Размер массива: {size}")
+        print(f"------------------------------\n")
+        for data_type, arr in types.items():
+            print(f"\nТип данных: {data_type}")
+            for sort_name, sort_fn in SORTS.items():
+                time_sec = measure_time(sort_fn, arr)
+                print(f" ✔ {sort_name:<10} | {time_sec:.6f} сек")
+
+            
