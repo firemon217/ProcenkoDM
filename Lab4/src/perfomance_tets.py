@@ -2,9 +2,11 @@ from generate_data import generate_datasets
 from sorts import *
 import timeit
 import sys
+import plot_result 
+
 sys.setrecursionlimit(10000) 
 
-SIZES = [100, 1000, 5000, 10000]
+SIZES = [100, 1000, 5000]
 
 SORTS = {
     "Bubble": bubble_sort,
@@ -43,6 +45,8 @@ if __name__ == "__main__":
             print(f"\nТип данных: {data_type}")
             for sort_name, sort_fn in SORTS.items():
                 time_sec = measure_time(sort_fn, arr)
-                print(f" ✔ {sort_name:<10} | {time_sec:.6f} сек")
-
-            
+                plot_result.plot_creater(sort_name, size, time_sec, data_type)
+    plot_result.plot_graph("random")  # график для случайных данных
+    plot_result.plot_graph("sorted")  # график для отсортированных данных
+    plot_result.plot_graph("reversed")  # график для обратного порядка
+    plot_result.plot_graph("almost_sorted")  # почти отсортированные
