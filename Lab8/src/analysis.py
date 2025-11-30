@@ -6,6 +6,7 @@ import string
 import time
 import matplotlib.pyplot as plt
 import networkx as nx
+from networkx.drawing.nx_agraph import to_agraph
 
 values = [60, 100, 120]
 weights = [10, 20, 30]
@@ -34,7 +35,7 @@ if frac_result > exact_result:
 
 # Функция генерации случайных частот символов
 def generate_frequencies(num_symbols: int) -> dict:
-    symbols = random.sample(string.ascii_letters + string.digits, num_symbols)
+    symbols = random.choices(string.ascii_letters + string.digits, k=num_symbols)
     frequencies = {s: random.randint(1, 1000) for s in symbols}
     return frequencies
 
@@ -84,16 +85,36 @@ def build_huffman_tree(freqs):
 def add_edges(G, node, parent=None):
     if node is None:
         return
+    
+    name = node.symbol if node.symbol else f"*{node.freq}"
+
     if parent:
-        G.add_edge(parent, node.symbol if node.symbol else str(id(node)))
-    add_edges(G, node.left, node.symbol if node.symbol else str(id(node)))
-    add_edges(G, node.right, node.symbol if node.symbol else str(id(node)))
+        G.add_edge(parent, name)
+
+    add_edges(G, node.left, name)
+    add_edges(G, node.right, name)
+
+def hierarchy_pos(G, root, width=1., vert_gap=0.2, vert_loc=0, xcenter=0.5):
+    def _hierarchy_pos(G, root, left, right, vert_loc, pos):
+        pos[root] = ((left + right) / 2, vert_loc)
+        children = list(G.successors(root))
+        if len(children) != 0:
+            dx = (right - left) / len(children)
+            next_left = left
+            for child in children:
+                next_right = next_left + dx
+                _hierarchy_pos(G, child, next_left, next_right, vert_loc - vert_gap, pos)
+                next_left += dx
+        return pos
+    return _hierarchy_pos(G, root, 0, width, vert_loc, {})
 
 # Пример
 freqs_example = generate_frequencies(10)
 root = build_huffman_tree(freqs_example)
 G = nx.DiGraph()
 add_edges(G, root)
-pos = nx.spring_layout(G)
-nx.draw(G, pos, with_labels=True, node_size=1500, node_color="lightblue", arrows=False)
+root_name = f"*{root.freq}"
+pos = hierarchy_pos(G, root_name)
+plt.figure(figsize=(10, 8))
+nx.draw(G, pos, with_labels=True, node_size=1800, node_color="lightblue")
 plt.show()
