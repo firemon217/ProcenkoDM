@@ -105,33 +105,23 @@ class BinarySearchTree:
         return node
     
     def is_valid_bst(self, node: Optional[TreeNode] = None, min_val=float('-inf'), max_val=float('inf')) -> bool:
-        """
-        Проверка, является ли дерево корректным BST.
-        Используется рекурсивный обход с ограничениями на значения узлов.
-        """
+        """Проверка корректности BST"""
         if node is None:
             node = self.root
         if node is None:
-            return True  # Пустое дерево — корректный BST
-
+            return True  # пустое дерево корректно
         if not (min_val < node.value < max_val):
-            return False  # Нарушение свойства BST
-
-        # Проверяем левое и правое поддеревья с обновлёнными ограничениями
-        return (self.is_valid_bst(node.left, min_val, node.value) and
-                self.is_valid_bst(node.right, node.value, max_val))
+            return False
+        left_valid = self.is_valid_bst(node.left, min_val, node.value) if node.left else True
+        right_valid = self.is_valid_bst(node.right, node.value, max_val) if node.right else True
+        return left_valid and right_valid
 
     def height(self, node: Optional[TreeNode] = None) -> int:
-        """
-        Вычисление высоты дерева или поддерева.
-        Высота пустого дерева = 0, листья = 1
-        """
+        """Вычисление высоты дерева/поддерева"""
         if node is None:
             node = self.root
         if node is None:
             return 0
-
-        left_height = self.height(node.left)
-        right_height = self.height(node.right)
-
+        left_height = self.height(node.left) if node.left else 0
+        right_height = self.height(node.right) if node.right else 0
         return 1 + max(left_height, right_height)

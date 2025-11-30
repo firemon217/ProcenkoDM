@@ -1,5 +1,6 @@
 import unittest
 from binary_search_tree import BinarySearchTree
+from tree_traversal import TreeTraversal
 
 class TestBinarySearchTree(unittest.TestCase):
     def setUp(self):
@@ -61,7 +62,7 @@ class TestBinarySearchTree(unittest.TestCase):
             self.bst.insert(v)
 
         sorted_values = sorted(values)
-        traversal_result = self.bst.inorder_traversal()
+        traversal_result = TreeTraversal.inorder_recursive(self.bst.root)
         self.assertEqual(traversal_result, sorted_values)
 
     def test_height(self):
