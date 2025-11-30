@@ -1,58 +1,64 @@
+
+from typing import Optional, Tuple, List
+
 class HashTableChaining:
-    def __init__(self, size=8):
-        # Инициализация хеш-таблицы с методом цепочек
-        self.size = size  # Начальный размер таблицы
-        self.table = [[] for _ in range(size)]  # Создаем массив пустых списков (бакетов)
-        self.count = 0  # Счетчик количества элементов в таблице
+    def __init__(self, size: int = 8):
+        # size корзин (bucket'ов)
+        self.size = max(1, size)
+        # Каждая корзина — список (цепочка)
+        self.table: List[List[Tuple[object, object]]] = [[] for _ in range(self.size)]
+        self.count = 0
 
     def _resize(self):
-        # Метод для увеличения размера таблицы при высокой нагрузке
-        old_table = self.table  # Сохраняем старую таблицу
-        self.size *= 2  # Увеличиваем размер в 2 раза
-        self.table = [[] for _ in range(self.size)]  # Создаем новую пустую таблицу
-        self.count = 0  # Сбрасываем счетчик (будет пересчитан при вставке)
+        """Рехеширование при превышении load factor."""
+        old_table = self.table
+        self.size *= 2
+        self.table = [[] for _ in range(self.size)]
+        self.count = 0
 
-        # Перехеширование всех элементов из старой таблицы в новую
-        for bucket in old_table:  # Проходим по каждому бакету старой таблицы
-            for key, value in bucket:  # Проходим по всем парам ключ-значение в бакете
-                self.insert(key, value)  # Вставляем элемент в новую таблицу
+        # Перемещаем всё в новую таблицу
+        for bucket in old_table:
+            for k, v in bucket:
+                self.insert(k, v)
 
     def insert(self, key, value):
-        # Вставка пары ключ-значение в таблицу
-        index = hash(key) % self.size  # Вычисляем индекс бакета с помощью встроенной hash()
-        bucket = self.table[index]  # Получаем ссылку на бакет (список)
+        """Вставка в цепочке."""
+        index = hash(key) % self.size
+        bucket = self.table[index]
 
-        # Проверяем, существует ли уже такой ключ в бакете
+        # Ищем ключ — если найден, обновляем
         for i, (k, _) in enumerate(bucket):
             if k == key:
-                # Если ключ найден, обновляем значение
                 bucket[i] = (key, value)
                 return
 
-        # Если ключ не найден, добавляем новую пару в конец бакета
+        # Иначе добавляем в конец цепочки
         bucket.append((key, value))
-        self.count += 1  # Увеличиваем счетчик элементов
+        self.count += 1
 
-        # Проверяем коэффициент загрузки (load factor)
+        # При load_factor > 0.75 — удвоение таблицы
         if self.count / self.size > 0.75:
-            self._resize()  # Если нагрузка > 75%, увеличиваем таблицу
+            self._resize()
 
     def search(self, key):
-        # Поиск значения по ключу
-        index = hash(key) % self.size  # Вычисляем индекс бакета
-        # Линейный поиск ключа в бакете
-        for k, v in self.table[index]:
-            if k == key:
-                return v  # Возвращаем значение, если ключ найден
-        return None  # Возвращаем None, если ключ не найден
+        """Поиск в цепочке."""
+        index = hash(key) % self.size
+        bucket = self.table[index]
 
-    def delete(self, key):
-        # Удаление элемента по ключу
-        index = hash(key) % self.size  # Вычисляем индекс бакета
-        bucket = self.table[index]  # Получаем ссылку на бакет
-        # Ищем ключ в бакете
+        for k, v in bucket:
+            if k == key:
+                return v
+        return None
+
+    def delete(self, key) -> bool:
+        """Удаление из цепочки."""
+        index = hash(key) % self.size
+        bucket = self.table[index]
+
         for i, (k, _) in enumerate(bucket):
             if k == key:
-                bucket.pop(i)  # Удаляем элемент по индексу
-                return True  # Возвращаем True при успешном удалении
-        return False  # Возвращаем False, если ключ не найден
+                bucket.pop(i)
+                self.count -= 1
+                return True
+
+        return False
