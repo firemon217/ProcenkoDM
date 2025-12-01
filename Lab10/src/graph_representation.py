@@ -1,129 +1,104 @@
+from collections import deque
+import heapq
+
 class Graph:
     """Базовый абстрактный класс графа."""
-
+    
     def add_vertex(self, v):
-        """Добавление вершины.
-        Должно быть реализовано в наследниках.
-        """
+        """Добавление вершины."""
         raise NotImplementedError
 
     def remove_vertex(self, v):
-        """Удаление вершины.
-        Должно быть реализовано в наследниках.
-        """
+        """Удаление вершины."""
         raise NotImplementedError
 
-    def add_edge(self, u, v):
-        """Добавление ребра.
-        Должно быть реализовано в наследниках.
-        """
+    def add_edge(self, u, v, weight=1):
+        """Добавление ребра с весом."""
         raise NotImplementedError
 
     def remove_edge(self, u, v):
-        """Удаление ребра.
-        Должно быть реализовано в наследниках.
-        """
-        raise NotImplementedError
-    
-    def neighbors(self, v):
-        """Вернуть список соседей вершины v"""
+        """Удаление ребра."""
         raise NotImplementedError
 
+    def neighbors(self, v):
+        """Возвращает список соседей вершины.
+        Для Дейкстры: возвращает (vertex, weight)
+        """
+        raise NotImplementedError
+
+    def get_vertices(self):
+        """Возвращает список всех вершин графа."""
+        raise NotImplementedError
 
 class AdjacencyMatrix(Graph):
-    def __init__(self, n):
-        """Создание матрицы смежности для n вершин.
-        Сложность: O(V^2)
-        """
+    def __init__(self, n=0):
+        """Создание матрицы смежности для n вершин."""
         self.n = n
         self.matrix = [[0] * n for _ in range(n)]
 
-    def add_edge(self, u, v):
-        """Добавление ребра между u и v.
-        Сложность: O(1)
-        """
-        self.matrix[u][v] = 1
-        self.matrix[v][u] = 1  # для неориентированного графа
-
-    def remove_edge(self, u, v):
-        """Удаление ребра между u и v.
-        Сложность: O(1)
-        """
-        self.matrix[u][v] = 0
-        self.matrix[v][u] = 0
-
-    def add_vertex(self):
-        """Добавление вершины.
-        Сложность: O(V) — добавить 1 элемент в каждую строку + новая строка
-        """
+    def add_vertex(self, v=None):
+        """Добавление вершины (индекс автоматически)."""
         self.n += 1
         for row in self.matrix:
             row.append(0)
         self.matrix.append([0] * self.n)
+        return self.n - 1  # возвращаем индекс новой вершины
 
     def remove_vertex(self, v):
-        """Удаление вершины v.
-        Сложность: O(V^2) — удаление строки и одного столбца в каждой строке
-        """
+        """Удаление вершины v."""
         self.matrix.pop(v)
         for row in self.matrix:
             row.pop(v)
         self.n -= 1
 
+    def add_edge(self, u, v, weight=1):
+        """Добавление ребра с весом."""
+        self.matrix[u][v] = weight
+        self.matrix[v][u] = weight  # для неориентированного графа, убрать если ориентированный
+
+    def remove_edge(self, u, v):
+        """Удаление ребра."""
+        self.matrix[u][v] = 0
+        self.matrix[v][u] = 0  # убрать если ориентированный
+
     def neighbors(self, v):
-        """Вернуть список соседей вершины v.
-        Сложность: O(V) — нужно пройти по одной строке матрицы.
-        """
-        return [u for u in range(self.n) if self.matrix[v][u] == 1]
+        """Список соседей с весами: [(vertex, weight), ...]"""
+        return [(u, self.matrix[v][u]) for u in range(self.n) if self.matrix[v][u] != 0]
 
-
+    def get_vertices(self):
+        """Список всех вершин"""
+        return list(range(self.n))
 
 class AdjacencyList(Graph):
     def __init__(self):
-        """Создание пустого списка смежности.
-        Сложность: O(1)
-        """
         self.adj = {}
 
     def add_vertex(self, v):
-        """Добавление вершины v.
-        Сложность: O(1)
-        """
         if v not in self.adj:
             self.adj[v] = []
 
     def remove_vertex(self, v):
-        """Удаление вершины v и всех связанных рёбер.
-        Сложность: O(V + E) — пройти по всем спискам смежности
-        """
         if v in self.adj:
             self.adj.pop(v)
         for lst in self.adj.values():
-            if v in lst:
-                lst.remove(v)
+            lst[:] = [(u, w) for u, w in lst if u != v]
 
-    def add_edge(self, u, v):
-        """Добавление ребра между u и v.
-        Сложность: O(1)–O(K) — поиск в списке длины K (степень вершины)
-        """
+    def add_edge(self, u, v, weight=1):
         self.add_vertex(u)
         self.add_vertex(v)
-        if v not in self.adj[u]:
-            self.adj[u].append(v)
-        if u not in self.adj[v]:
-            self.adj[v].append(u)
+        if not any(x[0] == v for x in self.adj[u]):
+            self.adj[u].append((v, weight))
+        if not any(x[0] == u for x in self.adj[v]):  # для неориентированного графа
+            self.adj[v].append((u, weight))
 
     def remove_edge(self, u, v):
-        """Удаление ребра между u и v.
-        Сложность: O(K) — нужно найти v в списке соседей u
-        """
-        if u in self.adj and v in self.adj[u]:
-            self.adj[u].remove(v)
-        if v in self.adj and u in self.adj[v]:
-            self.adj[v].remove(u)
+        if u in self.adj:
+            self.adj[u] = [(x, w) for x, w in self.adj[u] if x != v]
+        if v in self.adj:
+            self.adj[v] = [(x, w) for x, w in self.adj[v] if x != u]
 
     def neighbors(self, v):
-        """Вернуть список соседей вершины v.
-        Сложность: O(1) — возврат готового списка.
-        """
         return self.adj.get(v, [])
+
+    def get_vertices(self):
+        return list(self.adj.keys())

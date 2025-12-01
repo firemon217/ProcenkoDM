@@ -1,79 +1,58 @@
-from collections import deque   # импорт двусторонней очереди для BFS
+from graph_representation import Graph
+from collections import deque
 
-def bfs(graph, start):
-    """
-    BFS с возвращением расстояний и путей.
-    Сложность: O(V + E)
-    """
+def bfs(graph: Graph, start):
+    vertices = graph.get_vertices()
+    dist = {v: float('inf') for v in vertices}
+    parent = {v: None for v in vertices}
 
-    vertices = graph.get_vertices()   # получаем список всех вершин графа
+    queue = deque([start])
+    dist[start] = 0
 
-    dist = {v: float('inf') for v in vertices}  # словарь расстояний: изначально бесконечность
-    parent = {v: None for v in vertices}        # словарь родителей
+    while queue:
+        u = queue.popleft()
+        for v, _ in graph.neighbors(u):
+            if dist[v] == float('inf'):
+                dist[v] = dist[u] + 1
+                parent[v] = u
+                queue.append(v)
 
-    queue = deque([start])      # создаём очередь и кладём в неё стартовую вершину
-    dist[start] = 0             # расстояние от стартовой вершины до себя = 0
-
-    while queue:                # пока очередь не пуста
-        u = queue.popleft()     # извлекаем вершину из начала очереди
-
-        for v in graph.neighbors(u):        # проходим по каждому соседу текущей вершины u
-            if dist[v] == float('inf'):     # если сосед ещё не посещён
-                dist[v] = dist[u] + 1       # обновляем расстояние до него
-                parent[v] = u               # запоминаем, откуда пришли
-                queue.append(v)             # добавляем соседа в очередь
-
-    def build_path(to):             # вложенная функция восстановления пути
+    def build_path(to):
         if dist[to] == float('inf'):
             return None
-        path = []                   # список для хранения пути
-        while to is not None:       # поднимаемся по родителям вверх
+        path = []
+        while to is not None:
             path.append(to)
             to = parent[to]
-        return list(reversed(path))   # путь восстановлен в обратном порядке
+        return list(reversed(path))
 
-    return dist, parent, build_path    # возвращаем расстояния, родителей и функцию пути
-    # Сложность: O(V + E) — каждая вершина и каждое ребро обрабатываются один раз.
+    return dist, parent, build_path
 
-def dfs_recursive(graph, start):
-    """
-    Рекурсивный DFS.
-    Сложность: O(V + E)
-    """
-    visited = set()      # множество посещённых вершин
-    order = []           # порядок обхода
+def dfs_recursive(graph: Graph, start):
+    visited = set()
+    order = []
 
-    def dfs(v):                  # рекурсивная функция обхода
-        visited.add(v)           # помечаем вершину как посещённую
-        order.append(v)          # добавляем в порядок посещения
+    def dfs(v):
+        visited.add(v)
+        order.append(v)
+        for u, _ in graph.neighbors(v):
+            if u not in visited:
+                dfs(u)
 
-        for u in graph.neighbors(v):   # перебираем всех соседей вершины v
-            if u not in visited:       # если сосед не посещён
-                dfs(u)                 # вызываем DFS от него
+    dfs(start)
+    return order
 
-    dfs(start)      # запускаем обход с заданной стартовой вершины
-    return order    # возвращаем порядок посещения вершин
-    # Сложность: O(V + E) — один обход графа, глубина рекурсии до V.
+def dfs_iterative(graph: Graph, start):
+    visited = set()
+    order = []
+    stack = [start]
 
-def dfs_iterative(graph, start):
-    """
-    Итеративный DFS.
-    Сложность: O(V + E)
-    """
-    visited = set()       # множество посещённых вершин
-    order = []            # порядок обхода
-    stack = [start]       # собственный стек, вместо рекурсивного
-
-    while stack:                  # пока стек не пуст
-        v = stack.pop()           # извлекаем вершину с вершины стека
-
-        if v not in visited:      # обрабатываем только непосещённые
-            visited.add(v)        # помечаем вершину как посещённую
-            order.append(v)       # добавляем в порядок посещения
-
-            for u in reversed(graph.neighbors(v)):  # соседей кладём в стек
-                if u not in visited:                # только непосещённые
-                    stack.append(u)                 # кладём в стек
-
-    return order        # возвращаем порядок обхода
-    # Сложность: O(V + E) — как рекурсивный DFS, но без рекурсии.
+    while stack:
+        v = stack.pop()
+        if v not in visited:
+            visited.add(v)
+            order.append(v)
+            for u, _ in reversed(graph.neighbors(v)):
+                if u not in visited:
+                    stack.append(u)
+    return order
