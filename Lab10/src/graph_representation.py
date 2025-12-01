@@ -1,104 +1,132 @@
-from collections import deque
-import heapq
+from collections import defaultdict
 
-class Graph:
-    """Базовый абстрактный класс графа."""
-    
-    def add_vertex(self, v):
-        """Добавление вершины."""
-        raise NotImplementedError
-
-    def remove_vertex(self, v):
-        """Удаление вершины."""
-        raise NotImplementedError
+class AdjacencyMatrixGraph:
+    def __init__(self, num_vertices):
+        """
+        Инициализация графа с num_vertices вершинами.
+        Память: O(V^2)
+        """
+        self.num_vertices = num_vertices
+        self.matrix = [[0] * num_vertices for _ in range(num_vertices)]
 
     def add_edge(self, u, v, weight=1):
-        """Добавление ребра с весом."""
-        raise NotImplementedError
+        """
+        Добавление ребра (u -> v)
+        Время: O(1)
+        """
+        self.matrix[u][v] = weight
 
     def remove_edge(self, u, v):
-        """Удаление ребра."""
-        raise NotImplementedError
-
-    def neighbors(self, v):
-        """Возвращает список соседей вершины.
-        Для Дейкстры: возвращает (vertex, weight)
         """
-        raise NotImplementedError
+        Удаление ребра (u -> v)
+        Время: O(1)
+        """
+        self.matrix[u][v] = 0
 
-    def get_vertices(self):
-        """Возвращает список всех вершин графа."""
-        raise NotImplementedError
-
-class AdjacencyMatrix(Graph):
-    def __init__(self, n=0):
-        """Создание матрицы смежности для n вершин."""
-        self.n = n
-        self.matrix = [[0] * n for _ in range(n)]
-
-    def add_vertex(self, v=None):
-        """Добавление вершины (индекс автоматически)."""
-        self.n += 1
+    def add_vertex(self):
+        """
+        Добавление новой вершины
+        Время: O(V^2) (надо расширить все строки)
+        Память: увеличивается на O(V)
+        """
+        self.num_vertices += 1
         for row in self.matrix:
             row.append(0)
-        self.matrix.append([0] * self.n)
-        return self.n - 1  # возвращаем индекс новой вершины
+        self.matrix.append([0] * self.num_vertices)
 
     def remove_vertex(self, v):
-        """Удаление вершины v."""
+        """
+        Удаление вершины v
+        Время: O(V^2) (надо удалить строку и столбец)
+        """
         self.matrix.pop(v)
         for row in self.matrix:
             row.pop(v)
-        self.n -= 1
+        self.num_vertices -= 1
+
+from collections import defaultdict
+
+# -----------------------------
+# Матрица смежности
+# -----------------------------
+class AdjacencyMatrixGraph:
+    def __init__(self, num_vertices):
+        """
+        Инициализация графа с num_vertices вершинами.
+        Память: O(V^2)
+        """
+        self.num_vertices = num_vertices
+        self.matrix = [[0] * num_vertices for _ in range(num_vertices)]
 
     def add_edge(self, u, v, weight=1):
-        """Добавление ребра с весом."""
+        """
+        Добавление ребра (u -> v)
+        Время: O(1)
+        """
         self.matrix[u][v] = weight
-        self.matrix[v][u] = weight  # для неориентированного графа, убрать если ориентированный
 
     def remove_edge(self, u, v):
-        """Удаление ребра."""
+        """
+        Удаление ребра (u -> v)
+        Время: O(1)
+        """
         self.matrix[u][v] = 0
-        self.matrix[v][u] = 0  # убрать если ориентированный
 
-    def neighbors(self, v):
-        """Список соседей с весами: [(vertex, weight), ...]"""
-        return [(u, self.matrix[v][u]) for u in range(self.n) if self.matrix[v][u] != 0]
-
-    def get_vertices(self):
-        """Список всех вершин"""
-        return list(range(self.n))
-
-class AdjacencyList(Graph):
-    def __init__(self):
-        self.adj = {}
-
-    def add_vertex(self, v):
-        if v not in self.adj:
-            self.adj[v] = []
+    def add_vertex(self):
+        """
+        Добавление новой вершины
+        Время: O(V^2) (надо расширить все строки)
+        Память: увеличивается на O(V)
+        """
+        self.num_vertices += 1
+        for row in self.matrix:
+            row.append(0)
+        self.matrix.append([0] * self.num_vertices)
 
     def remove_vertex(self, v):
-        if v in self.adj:
-            self.adj.pop(v)
-        for lst in self.adj.values():
-            lst[:] = [(u, w) for u, w in lst if u != v]
+        """
+        Удаление вершины v
+        Время: O(V^2) (надо удалить строку и столбец)
+        """
+        self.matrix.pop(v)
+        for row in self.matrix:
+            row.pop(v)
+        self.num_vertices -= 1
+
+class AdjacencyListGraph:
+    def __init__(self):
+        """
+        Словарь: ключ = вершина, значение = список соседей с весами
+        Память: O(V + E)
+        """
+        self.graph = defaultdict(list)
 
     def add_edge(self, u, v, weight=1):
-        self.add_vertex(u)
-        self.add_vertex(v)
-        if not any(x[0] == v for x in self.adj[u]):
-            self.adj[u].append((v, weight))
-        if not any(x[0] == u for x in self.adj[v]):  # для неориентированного графа
-            self.adj[v].append((u, weight))
+        """
+        Добавление ребра (u -> v)
+        Время: O(1)
+        """
+        self.graph[u].append((v, weight))
 
     def remove_edge(self, u, v):
-        if u in self.adj:
-            self.adj[u] = [(x, w) for x, w in self.adj[u] if x != v]
-        if v in self.adj:
-            self.adj[v] = [(x, w) for x, w in self.adj[v] if x != u]
+        """
+        Удаление ребра (u -> v)
+        Время: O(deg(u))
+        """
+        self.graph[u] = [pair for pair in self.graph[u] if pair[0] != v]
 
-    def neighbors(self, v):
-        return self.adj.get(v, [])
+    def add_vertex(self, v):
+        """
+        Добавление вершины
+        Время: O(1)
+        """
+        self.graph[v] = []
 
-    def get_vertices(self):
-        return list(self.adj.keys())
+    def remove_vertex(self, v):
+        """
+        Удаление вершины и всех входящих рёбер
+        Время: O(V + E)
+        """
+        self.graph.pop(v, None)
+        for u in self.graph:
+            self.graph[u] = [pair for pair in self.graph[u] if pair[0] != v]
