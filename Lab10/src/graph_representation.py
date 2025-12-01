@@ -46,9 +46,6 @@ class AdjacencyMatrixGraph:
 
 from collections import defaultdict
 
-# -----------------------------
-# Матрица смежности
-# -----------------------------
 class AdjacencyMatrixGraph:
     def __init__(self, num_vertices):
         """
