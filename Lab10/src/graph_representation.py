@@ -1,4 +1,36 @@
-class AdjacencyMatrix:
+class Graph:
+    """Базовый абстрактный класс графа."""
+
+    def add_vertex(self, v):
+        """Добавление вершины.
+        Должно быть реализовано в наследниках.
+        """
+        raise NotImplementedError
+
+    def remove_vertex(self, v):
+        """Удаление вершины.
+        Должно быть реализовано в наследниках.
+        """
+        raise NotImplementedError
+
+    def add_edge(self, u, v):
+        """Добавление ребра.
+        Должно быть реализовано в наследниках.
+        """
+        raise NotImplementedError
+
+    def remove_edge(self, u, v):
+        """Удаление ребра.
+        Должно быть реализовано в наследниках.
+        """
+        raise NotImplementedError
+    
+    def neighbors(self, v):
+        """Вернуть список соседей вершины v"""
+        raise NotImplementedError
+
+
+class AdjacencyMatrix(Graph):
     def __init__(self, n):
         """Создание матрицы смежности для n вершин.
         Сложность: O(V^2)
@@ -38,7 +70,15 @@ class AdjacencyMatrix:
             row.pop(v)
         self.n -= 1
 
-class AdjacencyList:
+    def neighbors(self, v):
+        """Вернуть список соседей вершины v.
+        Сложность: O(V) — нужно пройти по одной строке матрицы.
+        """
+        return [u for u in range(self.n) if self.matrix[v][u] == 1]
+
+
+
+class AdjacencyList(Graph):
     def __init__(self):
         """Создание пустого списка смежности.
         Сложность: O(1)
@@ -81,4 +121,9 @@ class AdjacencyList:
             self.adj[u].remove(v)
         if v in self.adj and u in self.adj[v]:
             self.adj[v].remove(u)
-       
+
+    def neighbors(self, v):
+        """Вернуть список соседей вершины v.
+        Сложность: O(1) — возврат готового списка.
+        """
+        return self.adj.get(v, [])
